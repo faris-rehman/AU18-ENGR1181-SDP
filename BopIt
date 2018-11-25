@@ -1,0 +1,502 @@
+classdef BopIt < matlab.apps.AppBase
+
+    % Properties that correspond to app components
+    properties (Access = public)
+        UIFigure       matlab.ui.Figure
+        PRESSKEYLabel  matlab.ui.control.Label
+        keyLabel       matlab.ui.control.Label
+        timerLabel     matlab.ui.control.Label
+        startButton    matlab.ui.control.Button
+        TIMELEFTLabel  matlab.ui.control.Label
+        endButton      matlab.ui.control.Button
+    end
+
+    
+    methods (Access = public)
+        
+        
+        
+    end
+    
+
+    methods (Access = private)
+
+        % Code that executes after component creation
+        function startupFcn(app)
+            %This function executes upon startup
+            
+            %This block clears the command window and workspace
+            clear
+            clc
+                        
+            %This block initializes necessary global variables
+            global timeElapsed;
+            global getKeyPress;
+            global score;
+            
+            %This line gives the global variables starting values
+            score = 0;            
+            getKeyPress = false;            
+            timeElapsed = 30;            
+        end
+
+        % Button pushed function: startButton
+        function startButtonPushed(app, event)
+            %This function executes upon a button press on the "Start" button
+            
+            %This block re-establishes the global variables
+            global timeElapsed;
+            global getKeyPress;
+            global counter;
+            
+            %This line sets the boolean that starts the game to "true"
+            getKeyPress = true;
+            
+            %This line starts a background timer that runs concurrently and independently of the rest of the program, providing a way to cut the game off
+            %after 30 seconds
+            gameTimer = startTimer(app, timeElapsed);
+            
+            %This line clears away the "Start" button after it is pressed
+            set(app.startButton, 'Visible', 'off', 'Enable', 'off');
+            set(app.endButton, 'Visible', 'on', 'Enable', 'on');
+            
+            %This block starts the game counter at 0 and begins getting key presses from the user
+            counter = 0;
+            UIFigureKeyPress(app, event);
+        end
+
+        % Key press function: UIFigure
+        function UIFigureKeyPress(app, event)
+            %This function executes every time a key is pressed on the keyboard
+            
+            %This block re-establishes all necessary global variables
+            global timeElapsed;
+            global getKeyPress;
+            global letters;
+            global randomInt;
+            global randomLetter;
+            global score;
+            global counter;
+                        
+            %This if statement contains the bulk of the game logic and only allows the logic to execute when the "getKeyPress" boolean is true, meaning
+            %that the program is still looking for key presses from keyboard
+            if getKeyPress
+                %This if-elseif block makes the program execute differently based on how many times the game has been played. The program only executes
+                %differently on the first execution. The first execution only displays a letter and doesn't check a key press from the user, since the 
+                %user has just started the game
+                if counter == 0
+                    %Place letters in an array
+                    letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',];
+                    %Random number generator
+                    randomInt = randi(26,1,1);
+                    %Assign random number to corresponding letter in array 'letters'
+                    randomLetter=letters(randomInt);
+                    
+                     %Print random letter
+                     set(app.keyLabel, 'Text', randomLetter)
+                     
+                     %This string of if statements allows the program to play the sound file associated with each letter, completing the audio aspect
+                     %of the Bop It game model
+                     if randomLetter == 'a'
+                        [a,Fs] = audioread('A-1.wav');
+                        sound(a,Fs)
+                     end
+                
+                    if randomLetter =='b'
+                        [b,Fs] = audioread('B-1.wav');
+                        sound(b,Fs)
+                    end
+                
+                    if randomLetter == 'c'
+                        [c,Fs] = audioread('C-1.wav');
+                        sound(c,Fs)
+                    end
+                
+                    if randomLetter == 'd'
+                        [d,Fs] = audioread('D-1.wav');
+                        sound(d,Fs)
+                    end
+                
+                    if randomLetter == 'e'
+                        [e,Fs] = audioread('E-1.wav');
+                        sound(e,Fs)
+                    end
+                
+                    if randomLetter == 'f'
+                        [f,Fs] = audioread('F-1.wav');
+                        sound(f,Fs)
+                    end
+                
+                    if randomLetter == 'g'
+                        [g,Fs] = audioread('G-1.wav');
+                        sound(g,Fs)
+                    end
+                
+                    if randomLetter =='h'
+                        [h,Fs] = audioread('H-1.wav');
+                        sound(h,Fs)
+                    end
+                
+                    if randomLetter == 'i'
+                        [i,Fs] = audioread('I-1.wav');
+                        sound(i,Fs)
+                    end
+                
+                    if randomLetter == 'j'
+                        [j,Fs] = audioread('J-1.wav');
+                        sound(j,Fs)
+                    end
+                
+                    if randomLetter == 'k'
+                        [k,Fs] = audioread('K-1.wav');
+                        sound(k,Fs)
+                    end
+                
+                    if randomLetter == 'l'
+                        [l,Fs] = audioread('L-1.wav');
+                        sound(l,Fs)
+                    end
+                
+                    if randomLetter == 'm'
+                        [m,Fs] = audioread('M-1.wav');
+                        sound(m,Fs)
+                    end
+                
+                    if randomLetter == 'n'
+                        [n,Fs] = audioread('N-1.wav');
+                        sound(n,Fs)
+                    end
+                
+                    if randomLetter == 'o'
+                        [o,Fs] = audioread('O-1.wav');
+                        sound(o,Fs)
+                    end
+                
+                    if randomLetter == 'p'
+                        [p,Fs] = audioread('P-1.wav');
+                        sound(p,Fs)
+                    end
+                
+                    if randomLetter == 'q'
+                        [q,Fs] = audioread('Q-1.wav');
+                        sound(q,Fs)
+                    end
+                
+                    if randomLetter == 'r'
+                        [r,Fs] = audioread('R-1.wav');
+                        sound(r,Fs)
+                    end
+                
+                    if randomLetter == 's'
+                        [s,Fs] = audioread('S-1.wav');
+                        sound(s,Fs)
+                    end
+                
+                    if randomLetter == 't'
+                        [t,Fs] = audioread('T-1.wav');
+                        sound(t,Fs)
+                    end
+                
+                    if randomLetter == 'u'
+                        [u,Fs] = audioread('U-1.wav');
+                        sound(u,Fs)
+                    end
+                
+                    if randomLetter == 'v'
+                        [v,Fs] = audioread('V-1.wav');
+                        sound(v,Fs)
+                    end
+                
+                    if randomLetter == 'w'
+                        [w,Fs] = audioread('W-1.wav');
+                        sound(w,Fs)
+                    end
+                
+                    if randomLetter == 'x'
+                        [x,Fs] = audioread('X-1.wav');
+                        sound(x,Fs)
+                    end
+                
+                    if randomLetter == 'y'
+                        [y,Fs] = audioread('Y-1.wav');
+                        sound(y,Fs)
+                    end
+                
+                    if randomLetter == 'z'
+                        [z,Fs] = audioread('Z-1.wav');
+                        sound(z,Fs)
+                    end
+                    
+                    %This line changes the "counter" value to 1, ensuring that the program doesn't ever enter this if block again
+                    counter = 1;
+                elseif counter == 1
+                    %This block executes on every key press other than the first
+                    
+                    %This line stores the value of the keypress in the variable "key"
+                    key = event.Key
+                    
+                    %This if-else block checks if the keypress is equivalent to the randomly chosen letter
+                    if key == letters(randomInt)
+                        %If the key press is correct, the score increases
+                        score=score+1;
+                    else
+                        %If the key press is incorrect, the getKeyPress boolean is changed to false, terminating the game
+                        getKeyPress = false;
+                    end
+                    
+                    %This if statement only executes if the player's previous keypress was correct, in which case the random letter is replaced with a new
+                    %random letter
+                    if getKeyPress
+                        %Place letters in an array
+                        letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',];
+                        %Random number generator
+                        randomInt = randi(26,1,1);
+                        %Assign random number to corresponding letter in array 'letters'
+                        randomLetter=letters(randomInt);
+                        
+                       
+                        
+                         %Print random letter
+                         set(app.keyLabel, 'Text', randomLetter)
+                         
+                         %This string of if statements allows the program to play the sound file associated with each letter, completing the audio aspect
+                         %of the Bop It game model
+                         if randomLetter == 'a'
+                            [a,Fs] = audioread('A-1.wav');
+                            sound(a,Fs)
+                         end
+                    
+                        if randomLetter =='b'
+                            [b,Fs] = audioread('B-1.wav');
+                            sound(b,Fs)
+                        end
+                    
+                        if randomLetter == 'c'
+                            [c,Fs] = audioread('C-1.wav');
+                            sound(c,Fs)
+                        end
+                    
+                        if randomLetter == 'd'
+                            [d,Fs] = audioread('D-1.wav');
+                            sound(d,Fs)
+                        end
+                    
+                        if randomLetter == 'e'
+                            [e,Fs] = audioread('E-1.wav');
+                            sound(e,Fs)
+                        end
+                    
+                        if randomLetter == 'f'
+                            [f,Fs] = audioread('F-1.wav');
+                            sound(f,Fs)
+                        end
+                    
+                        if randomLetter == 'g'
+                            [g,Fs] = audioread('G-1.wav');
+                            sound(g,Fs)
+                        end
+                    
+                        if randomLetter =='h'
+                            [h,Fs] = audioread('H-1.wav');
+                            sound(h,Fs)
+                        end
+                    
+                        if randomLetter == 'i'
+                            [i,Fs] = audioread('I-1.wav');
+                            sound(i,Fs)
+                        end
+                    
+                        if randomLetter == 'j'
+                            [j,Fs] = audioread('J-1.wav');
+                            sound(j,Fs)
+                        end
+                    
+                        if randomLetter == 'k'
+                            [k,Fs] = audioread('K-1.wav');
+                            sound(k,Fs)
+                        end
+                    
+                        if randomLetter == 'l'
+                            [l,Fs] = audioread('L-1.wav');
+                            sound(l,Fs)
+                        end
+                    
+                        if randomLetter == 'm'
+                            [m,Fs] = audioread('M-1.wav');
+                            sound(m,Fs)
+                        end
+                    
+                        if randomLetter == 'n'
+                            [n,Fs] = audioread('N-1.wav');
+                            sound(n,Fs)
+                        end
+                    
+                        if randomLetter == 'o'
+                            [o,Fs] = audioread('O-1.wav');
+                            sound(o,Fs)
+                        end
+                    
+                        if randomLetter == 'p'
+                            [p,Fs] = audioread('P-1.wav');
+                            sound(p,Fs)
+                        end
+                    
+                        if randomLetter == 'q'
+                            [q,Fs] = audioread('Q-1.wav');
+                            sound(q,Fs)
+                        end
+                    
+                        if randomLetter == 'r'
+                            [r,Fs] = audioread('R-1.wav');
+                            sound(r,Fs)
+                        end
+                    
+                        if randomLetter == 's'
+                            [s,Fs] = audioread('S-1.wav');
+                            sound(s,Fs)
+                        end
+                    
+                        if randomLetter == 't'
+                            [t,Fs] = audioread('T-1.wav');
+                            sound(t,Fs)
+                        end
+                    
+                        if randomLetter == 'u'
+                            [u,Fs] = audioread('U-1.wav');
+                            sound(u,Fs)
+                        end
+                    
+                        if randomLetter == 'v'
+                            [v,Fs] = audioread('V-1.wav');
+                            sound(v,Fs)
+                        end
+                    
+                        if randomLetter == 'w'
+                            [w,Fs] = audioread('W-1.wav');
+                            sound(w,Fs)
+                        end
+                    
+                        if randomLetter == 'x'
+                            [x,Fs] = audioread('X-1.wav');
+                            sound(x,Fs)
+                        end
+                    
+                        if randomLetter == 'y'
+                            [y,Fs] = audioread('Y-1.wav');
+                            sound(y,Fs)
+                        end
+                    
+                        if randomLetter == 'z'
+                            [z,Fs] = audioread('Z-1.wav');
+                            sound(z,Fs)
+                        end
+                    end
+                end                
+            end
+            
+            %This if statement clears away the game screen if the user got the key press incorrect (which would cause the "getKeyPress" boolean to be false)
+            if ~getKeyPress
+                %This block shows the user's final score
+                set(app.timerLabel, 'Text', 'Game over!')
+                set(app.PRESSKEYLabel, 'Text', 'Your Final Score');
+                set(app.keyLabel, 'Text', num2str(score));
+            end
+        end
+
+        % Button pushed function: endButton
+        function endButtonPushed(app, event)
+            %This function executes when the user presses the "end" button
+            
+            %This line imports the necessary global variables
+            global score;
+            global getKeyPress;
+            
+            %This line sets the "getKeyPress" boolean to "false", terminating the timer
+            getKeyPress = false;
+            
+            %This block shows the user's final score
+            set(app.timerLabel, 'Text', 'Game over!')
+            set(app.PRESSKEYLabel, 'Text', 'Your Final Score');
+            set(app.keyLabel, 'Text', num2str(score));
+        end
+    end
+
+    % App initialization and construction
+    methods (Access = private)
+
+        % Create UIFigure and components
+        function createComponents(app)
+
+            % Create UIFigure
+            app.UIFigure = uifigure;
+            app.UIFigure.Position = [100 100 640 480];
+            app.UIFigure.Name = 'UI Figure';
+            app.UIFigure.KeyPressFcn = createCallbackFcn(app, @UIFigureKeyPress, true);
+
+            % Create PRESSKEYLabel
+            app.PRESSKEYLabel = uilabel(app.UIFigure);
+            app.PRESSKEYLabel.HorizontalAlignment = 'center';
+            app.PRESSKEYLabel.FontSize = 48;
+            app.PRESSKEYLabel.Position = [41 245 544 101];
+            app.PRESSKEYLabel.Text = 'PRESS KEY:';
+
+            % Create keyLabel
+            app.keyLabel = uilabel(app.UIFigure);
+            app.keyLabel.HorizontalAlignment = 'center';
+            app.keyLabel.FontSize = 48;
+            app.keyLabel.Position = [175 191 291 101];
+            app.keyLabel.Text = 'key';
+
+            % Create timerLabel
+            app.timerLabel = uilabel(app.UIFigure);
+            app.timerLabel.Position = [332 438 126 22];
+            app.timerLabel.Text = '30';
+
+            % Create startButton
+            app.startButton = uibutton(app.UIFigure, 'push');
+            app.startButton.ButtonPushedFcn = createCallbackFcn(app, @startButtonPushed, true);
+            app.startButton.Position = [271 50 100 22];
+            app.startButton.Text = 'Press to Start';
+
+            % Create TIMELEFTLabel
+            app.TIMELEFTLabel = uilabel(app.UIFigure);
+            app.TIMELEFTLabel.Position = [249 438 69 22];
+            app.TIMELEFTLabel.Text = 'TIME LEFT:';
+
+            % Create endButton
+            app.endButton = uibutton(app.UIFigure, 'push');
+            app.endButton.ButtonPushedFcn = createCallbackFcn(app, @endButtonPushed, true);
+            app.endButton.Enable = 'off';
+            app.endButton.Visible = 'off';
+            app.endButton.Position = [271 50 100 22];
+            app.endButton.Text = 'Press to End';
+        end
+    end
+
+    methods (Access = public)
+
+        % Construct app
+        function app = BopIt
+
+            % Create and configure components
+            createComponents(app)
+
+            % Register the app with App Designer
+            registerApp(app, app.UIFigure)
+
+            % Execute the startup function
+            runStartupFcn(app, @startupFcn)
+
+            if nargout == 0
+                clear app
+            end
+        end
+
+        % Code that executes before app deletion
+        function delete(app)
+
+            % Delete UIFigure when app is deleted
+            delete(app.UIFigure)
+        end
+    end
+end
