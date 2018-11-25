@@ -1,0 +1,342 @@
+classdef OverUnderSevenAD < matlab.apps.AppBase
+
+    % Properties that correspond to app components
+    properties (Access = public)
+        Over_Under_Seven             matlab.ui.Figure
+        dice                         matlab.ui.control.UIAxes
+        OverUnderorExactButtonGroup  matlab.ui.container.ButtonGroup
+        over                         matlab.ui.control.RadioButton
+        exact                        matlab.ui.control.RadioButton
+        under                        matlab.ui.control.RadioButton
+        rollButton                   matlab.ui.control.Button
+        CurrentPotLabel              matlab.ui.control.Label
+        potLabel                     matlab.ui.control.Label
+        ENTERSTARTINGPOTLabel        matlab.ui.control.Label
+        startButton                  matlab.ui.control.Button
+        startingPot                  matlab.ui.control.NumericEditField
+        BetfornextrollLabel          matlab.ui.control.Label
+        bet                          matlab.ui.control.NumericEditField
+        resultLabel                  matlab.ui.control.Label
+        quitButton                   matlab.ui.control.Button
+    end
+
+    methods (Access = private)
+
+        % Code that executes after component creation
+        function startupFcn(app)
+            %This function is executed upon startup
+            
+            %These lines initialize the necessary global variables upon startup
+            global pot;
+            global dice;
+            global quit;
+            global outOfMoney;
+                        
+            %These lines assign false values to the boolean variables that track whether or not the program should end
+            quit = false;
+            outOfMoney = false;
+            
+            %This line sets the current pot of money at 0
+            pot = 0;
+            
+            %This line imports the dice image data into the "dice" global data structure
+            dice = load('Dice.mat');
+        end
+
+        % Button pushed function: startButton
+        function startButtonPushed(app, event)
+            %This callback function is executed when the user presses the "Start" button
+            
+            %This block imports the necessary global variables into the start button function
+            global pot;
+            global dice;
+            global potString;
+            
+            %This line assigns the starting pot to the value entered into the "startingPot" text box
+            pot = get(app.startingPot, 'Value');
+            
+            %This block clears away the starting menu by setting the visibility of each element to "off"
+            set(app.ENTERSTARTINGPOTLabel, 'Visible', 'off');
+            set(app.startingPot, 'Visible', 'off');
+            set(app.startButton, 'Visible', 'off');
+            
+            %This block loads the game screen by setting the visibility of each element to "on"
+            set(app.dice, 'Visible', 'on');
+            set(app.OverUnderorExactButtonGroup, 'Visible', 'on');
+            set(app.rollButton, 'Visible', 'on');
+            set(app.CurrentPotLabel, 'Visible', 'on');
+            set(app.potLabel, 'Visible', 'on');   
+            set(app.bet, 'Visible', 'on'); 
+            set(app.quitButton, 'Visible', 'on'); 
+            set(app.BetfornextrollLabel, 'Visible', 'on');
+            set(app.bet, 'Limits', [0, pot]);
+            
+            %This line converts the pot variable into a string with a dollar sign so that it can be displayed
+            potString = strcat('$', num2str(pot));
+            
+            %This line sets the potLabel label element to display the current amount of money
+            set(app.potLabel, 'Text', potString);
+            
+            %This line displays two dice on the "1" side to open the game with a standard screen before any rolls have been made
+            imshow([dice.Dice{1}, dice.Dice{1}], 'Parent', app.dice)
+        end
+
+        % Button pushed function: rollButton
+        function rollButtonPushed(app, event)
+            %This callback function is executed whenever the player presses the "Roll" button
+            
+            %This block imports the necessary global variables into the start button function
+            global pot;
+            global dice;
+            global potString;
+            global quit;
+            global outOfMoney;          
+            
+            %This if statement is where the bulk of the game logic is carried out
+            if ~quit && ~outOfMoney
+                %This block "rolls" two random numbers between 1 and 6 to get the values of both dice, displays the two randomly selected dice, and assigns the sum of the two dice to the
+                %variable "sumRoll"                
+                roll1 = randi([1 6]);
+                roll2 = randi([1 6]);
+                imshow([dice.Dice{roll1}, dice.Dice{roll2}], 'Parent', app.dice);
+                sumRoll = roll1 + roll2;
+                
+                %This line gets the current bet from the bet input textbox
+                dollars = get(app.bet, 'Value');
+                
+                %This if-elseif-else block determines which option has been chosen from the radio button group (over, under, or seven)
+                if (get(app.over, 'Value') == 1)
+                    bet = 1;
+                elseif (get(app.exact, 'Value') == 1)
+                    bet = 3;
+                else
+                    bet = 2;
+                end
+                
+                %This if-elseif-else block uses the aforemntioned determination of which bet was made and determines whether or not the user was right in their bet, then adding or subtracting
+                %the appropriate amount from the player's pot based on their gamble
+                if bet == 1
+                    result = dollars;
+                    if sumRoll > 7
+                        pot = pot + result;
+                    elseif sumRoll == 7
+                        result = dollars * 4;
+                        pot = pot - result;
+                    else
+                        pot = pot - result;                        
+                    end
+                elseif bet == 2
+                    result = dollars;
+                    if sumRoll < 7
+                        pot = pot + result;
+                    elseif sumRoll == 7
+                        result = dollars * 4;
+                        pot = pot - result;
+                    else
+                        pot = pot - result;
+                    end
+                else
+                    result = dollars * 4;
+                    if sumRoll == 7
+                        pot = pot + result;
+                    else
+                        pot = pot - result;
+                    end
+                end
+                
+                %This if-else block determines if the pot has sunk below 0 (the player is in the negatives after losing a bet), in which case the game ends. If not, the screen refreshes to
+                %display the new pot
+                if pot <= 0
+                    outOfMoney = true;
+                else
+                    %This block displays the new pot to the user
+                    potString = strcat('$', num2str(pot));
+                    set(app.potLabel, 'Text', potString);
+                    
+                    %This line changes the limit of the bet input textbox so that the user cannot bet more than the value of the most recently updated pot
+                    set(app.bet, 'Limits', [0, pot]);
+                end                
+            end
+            
+            %This if statement clears out the game screen if the boolean "outOfMoney" is made true, meaning that the player has lost and their money has gone into the negatives
+            if outOfMoney
+                delete(app.dice);
+                set(app.OverUnderorExactButtonGroup, 'Visible', 'off');
+                set(app.rollButton, 'Visible', 'off');
+                set(app.CurrentPotLabel, 'Visible', 'off');
+                set(app.potLabel, 'Visible', 'off');   
+                set(app.bet, 'Visible', 'off'); 
+                set(app.BetfornextrollLabel, 'Visible', 'off');
+                set(app.quitButton, 'Visible', 'off');
+                
+                set(app.resultLabel, 'Visible', 'on');
+                set(app.resultLabel, 'Text', 'Out of money!');
+            end
+        end
+
+        % Button pushed function: quitButton
+        function quitButtonPushed(app, event)
+            %This callback function is executed when the player presses the "Quit" button
+            
+            %This block imports the necessary global variables into the start button function
+            global pot;
+            global dice;
+            global potString;
+            global quit;
+            global outOfMoney;  
+            
+            %This block clears away the game screen
+            delete(app.dice);
+            set(app.OverUnderorExactButtonGroup, 'Visible', 'off');
+            set(app.rollButton, 'Visible', 'off');
+            set(app.CurrentPotLabel, 'Visible', 'off');
+            set(app.potLabel, 'Visible', 'off');   
+            set(app.bet, 'Visible', 'off'); 
+            set(app.BetfornextrollLabel, 'Visible', 'off');
+            set(app.quitButton, 'Visible', 'off');
+            
+            %This line creates the string that displays the final score of the player
+            finalString = ['You have finished with ' potString];
+            
+            %This block displays the results to the screen
+            set(app.resultLabel, 'Visible', 'on');
+            set(app.resultLabel, 'Text', finalString);
+        end
+    end
+
+    % App initialization and construction
+    methods (Access = private)
+
+        % Create UIFigure and components
+        function createComponents(app)
+
+            % Create Over_Under_Seven
+            app.Over_Under_Seven = uifigure;
+            app.Over_Under_Seven.Position = [100 100 640 480];
+            app.Over_Under_Seven.Name = 'Over Under Seven';
+
+            % Create dice
+            app.dice = uiaxes(app.Over_Under_Seven);
+            app.dice.PlotBoxAspectRatio = [1 0.586715867158672 0.586715867158672];
+            app.dice.Visible = 'off';
+            app.dice.Clipping = 'off';
+            app.dice.Position = [173 176 300 185];
+
+            % Create OverUnderorExactButtonGroup
+            app.OverUnderorExactButtonGroup = uibuttongroup(app.Over_Under_Seven);
+            app.OverUnderorExactButtonGroup.TitlePosition = 'centertop';
+            app.OverUnderorExactButtonGroup.Title = 'Over, Under, or Exact';
+            app.OverUnderorExactButtonGroup.Visible = 'off';
+            app.OverUnderorExactButtonGroup.Position = [260 61 125 116];
+
+            % Create over
+            app.over = uiradiobutton(app.OverUnderorExactButtonGroup);
+            app.over.Text = 'Over';
+            app.over.Position = [11 70 58 22];
+            app.over.Value = true;
+
+            % Create exact
+            app.exact = uiradiobutton(app.OverUnderorExactButtonGroup);
+            app.exact.Text = 'Exact';
+            app.exact.Position = [11 48 65 22];
+
+            % Create under
+            app.under = uiradiobutton(app.OverUnderorExactButtonGroup);
+            app.under.Text = 'Under';
+            app.under.Position = [11 26 65 22];
+
+            % Create rollButton
+            app.rollButton = uibutton(app.Over_Under_Seven, 'push');
+            app.rollButton.ButtonPushedFcn = createCallbackFcn(app, @rollButtonPushed, true);
+            app.rollButton.Visible = 'off';
+            app.rollButton.Position = [272 25 100 22];
+            app.rollButton.Text = 'Roll';
+
+            % Create CurrentPotLabel
+            app.CurrentPotLabel = uilabel(app.Over_Under_Seven);
+            app.CurrentPotLabel.Visible = 'off';
+            app.CurrentPotLabel.Position = [258 423 70 22];
+            app.CurrentPotLabel.Text = 'Current Pot:';
+
+            % Create potLabel
+            app.potLabel = uilabel(app.Over_Under_Seven);
+            app.potLabel.Visible = 'off';
+            app.potLabel.Position = [334 423 296 22];
+            app.potLabel.Text = '$0';
+
+            % Create ENTERSTARTINGPOTLabel
+            app.ENTERSTARTINGPOTLabel = uilabel(app.Over_Under_Seven);
+            app.ENTERSTARTINGPOTLabel.HorizontalAlignment = 'center';
+            app.ENTERSTARTINGPOTLabel.FontSize = 48;
+            app.ENTERSTARTINGPOTLabel.Position = [46 279 551 82];
+            app.ENTERSTARTINGPOTLabel.Text = 'ENTER STARTING POT:';
+
+            % Create startButton
+            app.startButton = uibutton(app.Over_Under_Seven, 'push');
+            app.startButton.ButtonPushedFcn = createCallbackFcn(app, @startButtonPushed, true);
+            app.startButton.Position = [272 176 100 22];
+            app.startButton.Text = {'Start'; ''};
+
+            % Create startingPot
+            app.startingPot = uieditfield(app.Over_Under_Seven, 'numeric');
+            app.startingPot.Limits = [1 Inf];
+            app.startingPot.HorizontalAlignment = 'center';
+            app.startingPot.Position = [272 230 100 22];
+            app.startingPot.Value = 1;
+
+            % Create BetfornextrollLabel
+            app.BetfornextrollLabel = uilabel(app.Over_Under_Seven);
+            app.BetfornextrollLabel.Visible = 'off';
+            app.BetfornextrollLabel.Position = [227 360 90 22];
+            app.BetfornextrollLabel.Text = 'Bet for next roll:';
+
+            % Create bet
+            app.bet = uieditfield(app.Over_Under_Seven, 'numeric');
+            app.bet.Limits = [1 Inf];
+            app.bet.Visible = 'off';
+            app.bet.Position = [326 360 100 22];
+            app.bet.Value = 1;
+
+            % Create resultLabel
+            app.resultLabel = uilabel(app.Over_Under_Seven);
+            app.resultLabel.HorizontalAlignment = 'center';
+            app.resultLabel.FontSize = 40;
+            app.resultLabel.Visible = 'off';
+            app.resultLabel.Position = [2 217 640 49];
+
+            % Create quitButton
+            app.quitButton = uibutton(app.Over_Under_Seven, 'push');
+            app.quitButton.ButtonPushedFcn = createCallbackFcn(app, @quitButtonPushed, true);
+            app.quitButton.Visible = 'off';
+            app.quitButton.Position = [530 25 100 22];
+            app.quitButton.Text = 'Quit';
+        end
+    end
+
+    methods (Access = public)
+
+        % Construct app
+        function app = OverUnderSevenAD
+
+            % Create and configure components
+            createComponents(app)
+
+            % Register the app with App Designer
+            registerApp(app, app.Over_Under_Seven)
+
+            % Execute the startup function
+            runStartupFcn(app, @startupFcn)
+
+            if nargout == 0
+                clear app
+            end
+        end
+
+        % Code that executes before app deletion
+        function delete(app)
+
+            % Delete UIFigure when app is deleted
+            delete(app.Over_Under_Seven)
+        end
+    end
+end
