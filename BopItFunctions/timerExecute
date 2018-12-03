@@ -1,0 +1,50 @@
+function timerExecute(app)
+%This is the function that is executed every second by the timer object
+%"gameTimer"
+
+%This block imports necessary global variables
+global timeElapsed;
+global getKeyPress;
+global score;
+
+%This line decrements timeElapsed every time the function is executed (that
+%is, every second)
+timeElapsed = timeElapsed - 1;
+
+%This line creates a string out of the number variable timeElapsed
+a = num2str(timeElapsed);
+
+%This if-else block decided whether or not the game is over based on
+%whether or not the amount of time remaining (in variable "a") has reached
+%0 or not
+if (a == '0')
+    %This block executes once the timer reaches 0
+    %This line sets the timer label to show that the game is over
+    set(app.timerLabel, 'Text', 'Game over!')
+    %This line sets the getKeyPress boolean to "false", ending
+    %the game
+    getKeyPress = false;
+    
+    %This block shows the final score and clears away the "End Game" button
+    set(app.PRESSKEYLabel, 'Text', 'Your Final Score');
+    set(app.keyLabel, 'Text', num2str(score));
+    set(app.endButton, 'Visible', 'off');
+else
+    %This block executes at every time other than 0
+    
+    %This line sets the timer label to show the amount of time remaining
+    set(app.timerLabel, 'Text', a);
+end
+
+%This if statement executes if getKeyPress has been set to false in the
+%previous if block, meaning that the timer has reached 0 and the game is
+%over
+if ~getKeyPress
+    %This line sets the timerLabel to show the string "Game over!"
+    set(app.timerLabel, 'Text', 'Game over!')
+    %This line deletes the timer object "gameTimer" so that the timer stops
+    %running
+    delete(gameTimer);
+end
+end
+
