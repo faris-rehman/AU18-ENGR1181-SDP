@@ -41,6 +41,8 @@ classdef OverUnderSevenAD < matlab.apps.AppBase
             
             %This line imports the dice image data into the "dice" global data structure
             dice = load('Dice.mat');
+            
+            disableDefaultInteractivity(app.dice);
         end
 
         % Button pushed function: startButton
