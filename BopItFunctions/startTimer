@@ -1,0 +1,11 @@
+function [gameTimer] = startTimer(app, timeElapsed)
+%This function creates the background timer for Bop-It
+
+%This line creates a timer object named gameTimer that executes the
+%specified callback function ever second for 30 seconds at a fixed rate
+gameTimer = timer('Name', 'gameTimer', 'Period', 1.00000, 'TasksToExecute', 30, 'ExecutionMode', 'fixedDelay', 'TimerFcn', @(~, ~)timerExecute(app));
+
+%This line starts the timer object gameTimer
+start(gameTimer);
+end
+
