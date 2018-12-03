@@ -1,0 +1,844 @@
+classdef Connect4AD < matlab.apps.AppBase
+
+    % Properties that correspond to app components
+    properties (Access = public)
+        ConnectFourUIFigure  matlab.ui.Figure
+        axes1                matlab.ui.control.UIAxes
+        Label                matlab.ui.control.Label
+        popupmenu1           matlab.ui.control.DropDown
+        dropButton           matlab.ui.control.Button
+        playerName           matlab.ui.control.Label
+    end
+
+    methods (Access = private)
+
+        % Code that executes after component creation
+        function startupFcn(app)
+            %This function executes upon startup
+            
+            %These blocks of code initialize all necessary global variables
+            global turnCount;
+            global board;
+            global blackchip;
+            global redchip;
+            global mockBoard;
+            global emptyCell;
+            
+            global col1;
+            global col2;
+            global col3;
+            global col4;
+            global col5;
+            global col6;
+            global col7;
+            global choice;
+            
+            global quit;
+            global redWin;
+            global blackWin;
+            
+            %These blocks initialize the booleans that determine when the game quits if they're true to "false"
+            quit = false;
+            redWin = false;
+            blackWin = false;
+            
+            %This line initializes the turn counter to 0
+            turnCount = 0;
+            
+            %This block imports the connect 4 graphics from the provided data file
+            board = load('Connect.mat', 'Board');
+            blackchip = load('Connect.mat', 'blackchip');
+            redchip = load('Connect.mat', 'redchip');
+            
+            %This line saves a template for an empty cell of the board to be used in the animation function later on
+            emptyCell = board.Board{1,1};
+            
+            %These variables track which row is the next usable row in each column; the variable is decremented by 1 every time a piece is dropped into
+            %its corresponding column
+            col1 = 6;
+            col2 = 6;
+            col3 = 6;
+            col4 = 6;
+            col5 = 6;
+            col6 = 6;
+            col7 = 6;
+            
+            %This line initializes the global variable mockBoard with a 6x7 array that mirrors the visual board that is shown to the players            
+            mockBoard = [0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0; 0 0 0 0 0 0 0];
+            
+            %This line initializes the player prompt to show that it is player 1's turn
+            set(app.playerName, 'Text', 'Player 1, choose column:')
+            
+            %This line displays an empty board to the app window
+            disableDefaultInteractivity(app.axes1);
+            imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+        end
+
+        % Callback function: ConnectFourUIFigure, dropButton
+        function dropButtonPushed(app, event)
+            %This line disables the drop button immediately after it has been pushed, preventing the players from spamming the button repeatedly and crashing
+            %the game by causing this function to execute many times concurrently
+            set(app.dropButton, 'Enable', 'off');
+            
+            %These blocks import the necessary global variables
+            global turnCount;
+            global board;
+            global blackchip;
+            global redchip;
+            global mockBoard;
+            global emptyCell;
+            
+            global col1;
+            global col2;
+            global col3;
+            global col4;
+            global col5;
+            global col6;
+            global col7;
+            global choice;
+            
+            global quit;
+            global redWin;
+            global blackWin;
+            
+            %This if statement contains the bulk of the game logic, and is only carried out when none of the three boolean variables in the conditional
+            %statement are true, meaning that no one has decided to quit and no one has won
+            if (~quit && ~redWin && ~blackWin)
+                %This if statement contains all actions that player 1 can carry out;
+                %this if statement is executed at every other loop, meaning that the
+                %flow of control alternates between player 1 and player 2
+                if (mod(turnCount, 2) == 0)
+                    %This line determines which column the player chose from the drop down menu
+                    choice = get(app.popupmenu1, 'Value');
+                    
+                    %This line converts the determined choice to a number
+                    choice = str2num(choice)
+                    
+                    %This line sets the player prompt to show that the next turn belongs to player 2
+                    set(app.playerName, 'Text', 'Player 2, choose column:')
+            
+                    if (choice == 1 && col1 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col1, choice, blackchip.blackchip, emptyCell, board.Board, app);
+                        %This line displays the piece in its final position
+                        board.Board{col1, choice} = blackchip.blackchip;
+                        %This line refreshes the board shown in the app window to make sure that it is in its most recently updated state
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        %This line sets the correct position in the mirror numerical matrix to "1" to represent that there is a black chip there
+                        mockBoard(col1, choice) = 1;
+                        
+                        %These if statements test to see if the player has won. These tests are only carried out if it is not known that the player has
+                        %already won, and are only carried out if they are even possible to carry out. For example, in the first if statement, it is only
+                        %possible to check vertically down for 4 pieces in a row if the next available row in column 1 is 3 or less; thus, this if statement
+                        %only executes when the variable col1 is less than or equal to 3. See the function files for more details
+                        if (~blackWin && col1 <= 3)
+                            blackWin = checkVertDown(col1, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col1 >= 4)
+                            blackWin = checkUpRight(col1, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col1 <=3)
+                            blackWin = checkDownRight(col1, choice, mockBoard, 1);
+                        end
+                        
+                        
+            
+                        if (~blackWin)
+                            blackWin = checkHorizRight(col1, choice, mockBoard, 1);
+                        end
+                            
+                        %This line decrements the counter variable for the column
+                        col1 = col1 - 1;
+                        %This line increments the turn counter
+                        turnCount = turnCount + 1;
+                    elseif (choice == 2 && col2 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col2, choice, blackchip.blackchip, emptyCell, board.Board, app);
+                        board.Board{col2, choice} = blackchip.blackchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col2, choice) = 1;
+            
+                        if (~blackWin && col2 <= 3)
+                            blackWin = checkVertDown(col2, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col2 >= 4)
+                            blackWin = checkUpRight(col2, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col2 <=3)
+                            blackWin = checkDownRight(col2, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col2 <=4 && col2 >=2)
+                            blackWin = checkDownRightMedialOne(col2, choice, mockBoard, 1);
+                        end                       
+                                                
+                        if (~blackWin && col2 <=5 && col2 >=3)
+                            blackWin = checkDownLeftMedialTwo(col2, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizRight(col2, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizRightMedialOne(col2, choice, mockBoard, 1);
+                        end
+            
+                        col2 = col2 - 1;
+                        turnCount = turnCount + 1;
+                    elseif (choice == 3 && col3 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col3, choice, blackchip.blackchip, emptyCell, board.Board, app);
+                        board.Board{col3, choice} = blackchip.blackchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col3, choice) = 1;
+            
+                        if (~blackWin && col3 <= 3)
+                            blackWin = checkVertDown(col3, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col3 >= 4)
+                            blackWin = checkUpRight(col3, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col3 <=3)
+                            blackWin = checkDownRight(col3, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col3 <=4 && col3 >= 2)
+                            blackWin = checkDownRightMedialOne(col3, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col3 <=5 && col3 >= 3)
+                            blackWin = checkDownRightMedialTwo(col3, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col3 <=4 && col3 >= 2)
+                            blackWin = checkDownLeftMedialOne(col3, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col3 <=5 && col3 >= 3)
+                            blackWin = checkDownLeftMedialTwo(col3, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin)
+                            blackWin = checkHorizRight(col3, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizRightMedialOne(col3, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizRightMedialTwo(col3, choice, mockBoard, 1);
+                        end
+            
+                        col3 = col3 - 1;
+                        turnCount = turnCount + 1;
+                    elseif (choice == 4 && col4 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col4, choice, blackchip.blackchip, emptyCell, board.Board, app);
+                        board.Board{col4, choice} = blackchip.blackchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col4, choice) = 1;
+            
+                        if (~blackWin && col4 <= 3)
+                            blackWin = checkVertDown(col4, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col4 >= 4)
+                            blackWin = checkUpRight(col4, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col4 <=3)
+                            blackWin = checkDownRight(col4, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col4 <=4 && col4 >=2)
+                            blackWin = checkDownRightMedialOne(col4, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col4 <=5 && col4 >= 3)
+                            blackWin = checkDownRightMedialTwo(col4, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col4 >= 4)
+                            blackWin = checkUpLeft(col4, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col4 <=3)
+                            blackWin = checkDownLeft(col4, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col4 <=4 && col4 >=2)
+                            blackWin = checkDownLeftMedialOne(col4, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col4 <=5 && col4 >= 3)
+                            blackWin = checkDownLeftMedialTwo(col4, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin)
+                            blackWin = checkHorizRight(col4, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizRightMedialOne(col4, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizRightMedialTwo(col4, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin)
+                            blackWin = checkHorizLeft(col4, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizLeftMedialOne(col4, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizLeftMedialTwo(col4, choice, mockBoard, 1);
+                        end
+            
+                        col4 = col4 - 1;
+                        turnCount = turnCount + 1;
+                    elseif (choice == 5 && col5 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col5, choice, blackchip.blackchip, emptyCell, board.Board, app);
+                        board.Board{col5, choice} = blackchip.blackchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col5, choice) = 1;
+            
+                        if (~blackWin && col5 <= 3)
+                            blackWin = checkVertDown(col5, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col5 >= 4)
+                            blackWin = checkUpLeft(col5, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col5 <=3)
+                            blackWin = checkDownLeft(col5, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col5 <=4 && col5 >= 2)
+                            blackWin = checkDownLeftMedialOne(col5, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col5 <=5 && col5 >= 3)
+                            blackWin = checkDownLeftMedialTwo(col5, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col5 <=4 && col5 >= 2)
+                            blackWin = checkDownRightMedialOne(col5, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col5 <=5 && col5 >= 3)
+                            blackWin = checkDownRightMedialTwo(col5, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin)
+                            blackWin = checkHorizLeft(col5, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizLeftMedialOne(col5, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizLeftMedialTwo(col5, choice, mockBoard, 1);
+                        end
+            
+                        col5 = col5 - 1;
+                        turnCount = turnCount + 1;
+                    elseif (choice == 6 && col6 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col6, choice, blackchip.blackchip, emptyCell, board.Board, app);
+                        board.Board{col6, choice} = blackchip.blackchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col6, choice) = 1;
+            
+                        if (~blackWin && col6 <= 3)
+                            blackWin = checkVertDown(col6, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col6 >= 4)
+                            blackWin = checkUpLeft(col6, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col6 <=3)
+                            blackWin = checkDownLeft(col6, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col6 <=4 && col6 >= 2)
+                            blackWin = checkDownLeftMedialOne(col6, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin && col6 <=5 && col6 >= 3)
+                            blackWin = checkDownRightMedialTwo(col6, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin)
+                            blackWin = checkHorizLeft(col6, choice, mockBoard, 1);
+                        end
+                        
+                        if (~blackWin)
+                            blackWin = checkHorizLeftMedialOne(col6, choice, mockBoard, 1);
+                        end
+            
+                        col6 = col6 - 1
+                        turnCount = turnCount + 1;
+                    elseif (choice == 7 && col7 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col7, choice, blackchip.blackchip, emptyCell, board.Board, app);
+                        board.Board{col7, choice} = blackchip.blackchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col7, choice) = 1;
+            
+            
+                        if (~blackWin && col7 <= 3)
+                            blackWin = checkVertDown(col7, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col7 >= 4)
+                            blackWin = checkUpLeft(col7, choice, mockBoard, 1);
+                        end
+            
+                        if (~blackWin && col7 <=3)
+                            blackWin = checkDownLeft(col7, choice, mockBoard, 1);
+                        end                        
+            
+                        if (~blackWin)
+                            blackWin = checkHorizLeft(col7, choice, mockBoard, 1);
+                        end                       
+            
+                        col7 = col7 - 1;
+                        turnCount = turnCount + 1;
+                    end
+                    imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                else
+                    choice = get(app.popupmenu1, 'Value');
+                    choice = str2num(choice)
+                    set(app.playerName, 'Text', 'Player 1, choose column:')
+            
+                    if (choice == 1 && col1 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col1, choice, redchip.redchip, emptyCell, board.Board, app);
+                        board.Board{col1, choice} = redchip.redchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col1, choice) = 2;
+            
+                        if (~redWin && col1 <= 3)
+                            redWin = checkVertDown(col1, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col1 >= 4)
+                            redWin = checkUpRight(col1, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col1 <=3)
+                            redWin = checkDownRight(col1, choice, mockBoard, 2);
+                        end                       
+            
+                        if (~redWin)
+                            redWin = checkHorizRight(col1, choice, mockBoard, 2);
+                        end
+            
+                        col1 = col1 - 1;
+                        turnCount = turnCount + 1;
+                    elseif (choice == 2 && col2 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col2, choice, redchip.redchip, emptyCell, board.Board, app);
+                        board.Board{col2, choice} = redchip.redchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col2, choice) = 2;
+            
+                        if (~redWin && col2 <= 3)
+                            redWin = checkVertDown(col2, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col2 >= 4)
+                            redWin = checkUpRight(col2, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col2 <=3)
+                            redWin = checkDownRight(col2, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col2 <=4 && col2 >= 2)
+                            redWin = checkDownRightMedialOne(col2, choice, mockBoard, 2);
+                        end        
+                        
+                        if (~redWin && col2 <=5 && col2 >= 3)
+                            redWin = checkDownLeftMedialTwo(col2, choice, mockBoard, 2);
+                        end  
+            
+                        if (~redWin)
+                            redWin = checkHorizRight(col2, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin)
+                            redWin = checkHorizRightMedialOne(col2, choice, mockBoard, 2);
+                        end
+            
+                        col2 = col2 - 1;
+                        turnCount = turnCount + 1;
+                    elseif (choice == 3 && col3 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col3, choice, redchip.redchip, emptyCell, board.Board, app);
+                        board.Board{col3, choice} = redchip.redchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col3, choice) = 2;
+            
+                        if (~redWin && col3 <= 3)
+                            redWin = checkVertDown(col3, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col3 >= 4)
+                            redWin = checkUpRight(col3, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col3 <=3)
+                            redWin = checkDownRight(col3, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col3 <=4 && col3 >= 2)
+                            redWin = checkDownRightMedialOne(col3, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col3 <=5 && col3 >= 3)
+                            redWin = checkDownRightMedialTwo(col3, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col3 <=4 && col3 >= 2)
+                            redWin = checkDownLeftMedialOne(col3, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col3 <=5 && col3 >= 3)
+                            redWin = checkDownLeftMedialTwo(col3, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin)
+                            redWin = checkHorizRight(col3, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin)
+                            redWin = checkHorizRightMedialOne(col3, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin)
+                            redWin = checkHorizRightMedialTwo(col3, choice, mockBoard, 2);
+                        end
+            
+                        col3 = col3 - 1;
+                        turnCount = turnCount + 1;
+                    elseif (choice == 4 && col4 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col4, choice, redchip.redchip, emptyCell, board.Board, app);
+                        board.Board{col4, choice} = redchip.redchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col4, choice) = 2;
+            
+                        if (~redWin && col4 <= 3)
+                            redWin = checkVertDown(col4, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col4 >= 4)
+                            redWin = checkUpRight(col4, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col4 <=3)
+                            redWin = checkDownRight(col4, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col4 <=4 && col4 >= 2)
+                            redWin = checkDownRightMedialOne(col4, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col4 <=5 && col4 >=3)
+                            redWin = checkDownRightMedialTwo(col4, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col4 >= 4)
+                            redWin = checkUpLeft(col4, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col4 <=3)
+                            redWin = checkDownLeft(col4, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col4 <=4 && col4 >= 2)
+                            redWin = checkDownLeftMedialOne(col4, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col4 <=5 && col4 >= 3)
+                            redWin = checkDownLeftMedialTwo(col4, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin)
+                            redWin = checkHorizRight(col4, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin)
+                            redWin = checkHorizRightMedialOne(col4, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin)
+                            redWin = checkHorizRightMedialTwo(col4, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin)
+                            redWin = checkHorizLeft(col4, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin)
+                            redWin = checkHorizLeftMedialOne(col4, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin)
+                            redWin = checkHorizLeftMedialTwo(col4, choice, mockBoard, 2);
+                        end
+            
+                        col4 = col4 - 1;
+                        turnCount = turnCount + 1;
+                    elseif (choice == 5 && col5 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col5, choice, redchip.redchip, emptyCell, board.Board, app);
+                        board.Board{col5, choice} = redchip.redchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col5, choice) = 2;
+            
+                        if (~redWin && col5 <= 3)
+                            redWin = checkVertDown(col5, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col5 >= 4)
+                            redWin = checkUpLeft(col5, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col5 <=3)
+                            redWin = checkDownLeft(col5, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col5 <=4 && col5 >= 2)
+                            redWin = checkDownLeftMedialOne(col5, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col5 <=5 && col5 >= 3)
+                            redWin = checkDownLeftMedialTwo(col5, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col5 <=4 && col5 >= 2)
+                            redWin = checkDownRightMedialOne(col5, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col5 <=5 && col5 >= 3)
+                            redWin = checkDownRightMedialTwo(col5, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin)
+                            redWin = checkHorizLeft(col5, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin)
+                            redWin = checkHorizLeftMedialOne(col5, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin)
+                            redWin = checkHorizLeftMedialTwo(col5, choice, mockBoard, 2);
+                        end
+            
+                        col5 = col5 - 1;
+                        turnCount = turnCount + 1;
+                    elseif (choice == 6 && col6 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col6, choice, redchip.redchip, emptyCell, board.Board, app);
+                        board.Board{col6, choice} = redchip.redchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col6, choice) = 2;
+            
+                        if (~redWin && col6 <= 3)
+                            redWin = checkVertDown(col6, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col6 >= 4)
+                            redWin = checkUpLeft(col6, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col6 <=3)
+                            redWin = checkDownLeft(col6, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin && col6 <=4 && col6 >= 2)
+                            redWin = checkDownLeftMedialOne(col6, choice, mockBoard, 2);
+                        end   
+                        
+                        if (~redWin && col6 <=5 && col6 >= 3)
+                            redWin = checkDownRightMedialTwo(col6, choice, mockBoard, 2);
+                        end 
+                        
+                        if (~redWin)
+                            redWin = checkHorizLeft(col6, choice, mockBoard, 2);
+                        end
+                        
+                        if (~redWin)
+                            redWin = checkHorizLeftMedialOne(col6, choice, mockBoard, 2);
+                        end
+            
+                        col6 = col6 - 1
+                        turnCount = turnCount + 1;
+                    elseif (choice == 7 && col7 ~= 0)
+                        %This line animates the piece to fall down into the column. See the annotations in the function file for more details
+                        animatePieceAD(col7, choice, redchip.redchip, emptyCell, board.Board, app);
+                        board.Board{col7, choice} = redchip.redchip;
+                        imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+                        mockBoard(col7, choice) = 2;
+            
+                        if (~redWin && col7 <= 3)
+                            redWin = checkVertDown(col7, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col7 >= 4)
+                            redWin = checkUpLeft(col7, choice, mockBoard, 2);
+                        end
+            
+                        if (~redWin && col7 <=3)
+                            redWin = checkDownLeft(col7, choice, mockBoard, 2);
+                        end
+                        
+                        
+            
+                        if (~redWin)
+                            redWin = checkHorizLeft(col7, choice, mockBoard, 2);
+                        end
+                        
+            
+                        col7 = col7 - 1;
+                        turnCount = turnCount + 1;
+                    end
+                end
+                            
+                if (col1 == 0 && col2 == 0 && col3 == 0 && col4 == 0 && col5 == 0 && col6 == 0 && col7 == 0)
+                    quit = true;
+                end
+            
+                if blackWin
+                    set(app.playerName, 'Text', 'Player 1 has won!')
+                elseif redWin
+                    set(app.playerName, 'Text', 'Player 2 has won!')
+                elseif quit
+                    set(app.playerName, 'Text', 'Player Quit has won!')
+                end
+            end
+            
+            if (col1 == 0)
+                app.popupmenu1.Items(strcmp(app.popupmenu1.Items, '1')) = [];
+            end
+            
+            if (col2 == 0)
+                app.popupmenu1.Items(strcmp(app.popupmenu1.Items, '2')) = [];
+            end
+            
+            if (col3 == 0)
+                app.popupmenu1.Items(strcmp(app.popupmenu1.Items, '3')) = [];
+            end
+            
+            if (col4 == 0)
+                app.popupmenu1.Items(strcmp(app.popupmenu1.Items, '4')) = [];
+            end
+            
+            if (col5 == 0)
+                app.popupmenu1.Items(strcmp(app.popupmenu1.Items, '5')) = [];
+            end
+            
+            if (col6 == 0)
+                app.popupmenu1.Items(strcmp(app.popupmenu1.Items, '6')) = [];          
+            end
+            
+            if (col7 == 0 )
+                app.popupmenu1.Items(strcmp(app.popupmenu1.Items, '7')) = [];
+            end
+            
+            imshow([board.Board{1,:}; board.Board{2,:}; board.Board{3,:}; board.Board{4,:}; board.Board{5,:}; board.Board{6,:}], 'Parent', app.axes1);
+            set(app.dropButton, 'Enable', 'on');
+            done = true;
+        end
+    end
+
+    % App initialization and construction
+    methods (Access = private)
+
+        % Create UIFigure and components
+        function createComponents(app)
+
+            % Create ConnectFourUIFigure
+            app.ConnectFourUIFigure = uifigure;
+            app.ConnectFourUIFigure.Position = [100 100 640 480];
+            app.ConnectFourUIFigure.Name = 'Connect Four';
+            app.ConnectFourUIFigure.ButtonDownFcn = createCallbackFcn(app, @dropButtonPushed, true);
+
+            % Create axes1
+            app.axes1 = uiaxes(app.ConnectFourUIFigure);
+            app.axes1.XTick = [];
+            app.axes1.YTick = [];
+            app.axes1.HandleVisibility = 'off';
+            app.axes1.Position = [99 75 493 304];
+
+            % Create Label
+            app.Label = uilabel(app.ConnectFourUIFigure);
+            app.Label.HorizontalAlignment = 'right';
+            app.Label.Position = [244 67 25 22];
+            app.Label.Text = '';
+
+            % Create popupmenu1
+            app.popupmenu1 = uidropdown(app.ConnectFourUIFigure);
+            app.popupmenu1.Items = {'1', '2', '3', '4', '5', '6', '7'};
+            app.popupmenu1.Position = [290 46 61 22];
+            app.popupmenu1.Value = '1';
+
+            % Create dropButton
+            app.dropButton = uibutton(app.ConnectFourUIFigure, 'push');
+            app.dropButton.ButtonPushedFcn = createCallbackFcn(app, @dropButtonPushed, true);
+            app.dropButton.Interruptible = 'off';
+            app.dropButton.Position = [407 46 100 22];
+            app.dropButton.Text = 'Drop Piece';
+
+            % Create playerName
+            app.playerName = uilabel(app.ConnectFourUIFigure);
+            app.playerName.Position = [129 46 136 22];
+        end
+    end
+
+    methods (Access = public)
+
+        % Construct app
+        function app = Connect4AD
+
+            % Create and configure components
+            createComponents(app)
+
+            % Register the app with App Designer
+            registerApp(app, app.ConnectFourUIFigure)
+
+            % Execute the startup function
+            runStartupFcn(app, @startupFcn)
+
+            if nargout == 0
+                clear app
+            end
+        end
+
+        % Code that executes before app deletion
+        function delete(app)
+
+            % Delete UIFigure when app is deleted
+            delete(app.ConnectFourUIFigure)
+        end
+    end
+end
