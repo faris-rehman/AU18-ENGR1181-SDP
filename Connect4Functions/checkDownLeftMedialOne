@@ -1,0 +1,35 @@
+function [win] = checkDownLeftMedialOne(row, column, board, type)
+    %This function executes when the program wants to check to the down and
+    %left of the most recently placed piece to see if there are four in a
+    %row and the player has won
+    
+    %This line initializes the "win" output boolean as false because it hasn't
+    %been proven that the player has won yet
+    win = false;
+    
+    %This line starts the count of the number of pieces in a row at 1,
+    %since it is known that there is at least one piece in the row starting
+    %at the origin
+    count = 1;
+    
+    %This series of nested if statements checks each position on the board
+    %to the down and to the left of the starting position incrementally
+    %until either one of those positions doesn't contain the right type of
+    %chip or count equals four
+    if (board(row - 1, column + 1) == type)
+        count = count + 1;
+        if (board(row + 1, column - 1) == type)
+            count = count + 1;
+            if (board(row + 2, column - 2) == type)
+                count = count + 1;
+            end
+        end
+    end
+    
+    %If count equals four, that means that the player has won and the win
+    %output variable is set to true
+    if (count == 4)
+        win = true;
+    end
+end
+
